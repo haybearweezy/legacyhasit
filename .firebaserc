@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "legacybox-0387"
-  }
+    "default": "manyversions-1c9b1"
+  },
+  "targets": {},
+  "etags": {}
 }
