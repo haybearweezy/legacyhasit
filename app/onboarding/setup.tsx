@@ -1,13 +1,30 @@
-import { ScreenContainer } from '@/components/screen-container';
-import { useColors } from '@/hooks/use-colors';
-import { useStore } from '@/lib/store';
-import { UserRole } from '@/shared/app-types';
-import { trpc } from '@/lib/trpc';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { pickProfilePictureFromLibrary, takeProfilePicture, getInitials, getAvatarColor } from '@/lib/profile-picture-service';
+import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { useStore } from "@/lib/store";
+import { UserRole } from "@/shared/app-types";
+import { trpc } from "@/lib/trpc";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  TextInput,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Alert,
+} from "react-native";
+import * as Haptics from "expo-haptics";
+import {
+  pickProfilePictureFromLibrary,
+  takeProfilePicture,
+  getInitials,
+  getAvatarColor,
+} from "@/lib/profile-picture-service";
+import { getApiConnectionErrorMessage } from "@/lib/error-utils";
 
 export default function FamilySetupScreen() {
   const colors = useColors();
@@ -16,13 +33,15 @@ export default function FamilySetupScreen() {
   const { completeOnboarding } = useStore();
   const createVaultMutation = trpc.sync.createVault.useMutation();
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [vaultName, setVaultName] = useState('');
-  const [profilePictureUri, setProfilePictureUri] = useState<string | null>(null);
+  const [vaultName, setVaultName] = useState("");
+  const [profilePictureUri, setProfilePictureUri] = useState<string | null>(
+    null,
+  );
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
 
-  const isElder = role === 'elder';
+  const isElder = role === "elder";
   const canContinue = name.trim().length > 0 && vaultName.trim().length > 0;
 
   const handleTakePhoto = async () => {
@@ -30,7 +49,8 @@ export default function FamilySetupScreen() {
     if (uri) {
       setProfilePictureUri(uri);
       setShowPhotoOptions(false);
-      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (Platform.OS !== "web")
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -39,19 +59,21 @@ export default function FamilySetupScreen() {
     if (uri) {
       setProfilePictureUri(uri);
       setShowPhotoOptions(false);
-      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (Platform.OS !== "web")
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
   const handleRemovePhoto = () => {
-    Alert.alert('Remove Photo?', 'Your profile picture will be removed.', [
-      { text: 'Keep', style: 'cancel' },
+    Alert.alert("Remove Photo?", "Your profile picture will be removed.", [
+      { text: "Keep", style: "cancel" },
       {
-        text: 'Remove',
-        style: 'destructive',
+        text: "Remove",
+        style: "destructive",
         onPress: () => {
           setProfilePictureUri(null);
-          if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          if (Platform.OS !== "web")
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         },
       },
     ]);
@@ -63,7 +85,10 @@ export default function FamilySetupScreen() {
 
     try {
       const vaultId = Date.now().toString();
-      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const inviteCode = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
 
       // Create vault on server
       const remoteVault = await createVaultMutation.mutateAsync({
@@ -72,21 +97,26 @@ export default function FamilySetupScreen() {
         inviteCode,
       });
 
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
+      if (Platform.OS !== "web")
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
       // Complete onboarding with server-returned vault
       completeOnboarding(
-        role ?? 'relative', 
-        name.trim(), 
-        remoteVault.name, 
+        role ?? "relative",
+        name.trim(),
+        remoteVault.name,
         profilePictureUri,
-        remoteVault // Pass the full vault object from server
+        remoteVault, // Pass the full vault object from server
       );
-      
-      router.replace('/(tabs)' as never);
+
+      router.replace("/(tabs)" as never);
     } catch (error) {
-      console.error('Failed to create vault:', error);
-      Alert.alert('Error', 'Failed to create your family vault. Please try again.');
+      console.error("Failed to create vault:", error);
+      Alert.alert(
+        "Error",
+        getApiConnectionErrorMessage(error) ??
+          "Failed to create your family vault. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -96,21 +126,31 @@ export default function FamilySetupScreen() {
     <ScreenContainer containerClassName="bg-background">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.container,
+            { backgroundColor: colors.background },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-              <Text style={[styles.backText, { color: colors.primary }]}>← Back</Text>
+            <Pressable
+              onPress={() => router.back()}
+              style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+            >
+              <Text style={[styles.backText, { color: colors.primary }]}>
+                ← Back
+              </Text>
             </Pressable>
             <Text style={[styles.title, { color: colors.foreground }]}>
-              {isElder ? 'Tell us about yourself' : 'Set up your family vault'}
+              {isElder ? "Tell us about yourself" : "Set up your family vault"}
             </Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>
               {isElder
-                ? 'Your family will see your name and photo when they listen to your stories.'
-                : 'Give your family vault a name so relatives can find it.'}
+                ? "Your family will see your name and photo when they listen to your stories."
+                : "Give your family vault a name so relatives can find it."}
             </Text>
           </View>
 
@@ -119,48 +159,107 @@ export default function FamilySetupScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.profilePictureButton,
-                { backgroundColor: profilePictureUri ? colors.surface : getAvatarColor('new-member') },
+                {
+                  backgroundColor: profilePictureUri
+                    ? colors.surface
+                    : getAvatarColor("new-member"),
+                },
                 pressed && { opacity: 0.8 },
               ]}
               onPress={() => setShowPhotoOptions(!showPhotoOptions)}
             >
               {profilePictureUri ? (
-                <Image source={{ uri: profilePictureUri }} style={styles.profileImage} />
+                <Image
+                  source={{ uri: profilePictureUri }}
+                  style={styles.profileImage}
+                />
               ) : (
-                <Text style={styles.profileInitials}>{getInitials(name || 'You')}</Text>
+                <Text style={styles.profileInitials}>
+                  {getInitials(name || "You")}
+                </Text>
               )}
             </Pressable>
             <Text style={[styles.profileLabel, { color: colors.muted }]}>
-              {profilePictureUri ? 'Tap to change photo' : 'Tap to add a profile photo'}
+              {profilePictureUri
+                ? "Tap to change photo"
+                : "Tap to add a profile photo"}
             </Text>
 
             {/* Photo Options */}
             {showPhotoOptions && (
-              <View style={[styles.photoOptions, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.photoOptions,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <Pressable
-                  style={({ pressed }) => [styles.photoOption, pressed && { opacity: 0.7 }]}
+                  style={({ pressed }) => [
+                    styles.photoOption,
+                    pressed && { opacity: 0.7 },
+                  ]}
                   onPress={handleTakePhoto}
                 >
                   <Text style={styles.photoOptionEmoji}>📷</Text>
-                  <Text style={[styles.photoOptionText, { color: colors.foreground }]}>Take Photo</Text>
+                  <Text
+                    style={[
+                      styles.photoOptionText,
+                      { color: colors.foreground },
+                    ]}
+                  >
+                    Take Photo
+                  </Text>
                 </Pressable>
-                <View style={[styles.photoOptionDivider, { backgroundColor: colors.border }]} />
+                <View
+                  style={[
+                    styles.photoOptionDivider,
+                    { backgroundColor: colors.border },
+                  ]}
+                />
                 <Pressable
-                  style={({ pressed }) => [styles.photoOption, pressed && { opacity: 0.7 }]}
+                  style={({ pressed }) => [
+                    styles.photoOption,
+                    pressed && { opacity: 0.7 },
+                  ]}
                   onPress={handlePickPhoto}
                 >
                   <Text style={styles.photoOptionEmoji}>🖼️</Text>
-                  <Text style={[styles.photoOptionText, { color: colors.foreground }]}>Choose from Library</Text>
+                  <Text
+                    style={[
+                      styles.photoOptionText,
+                      { color: colors.foreground },
+                    ]}
+                  >
+                    Choose from Library
+                  </Text>
                 </Pressable>
                 {profilePictureUri && (
                   <>
-                    <View style={[styles.photoOptionDivider, { backgroundColor: colors.border }]} />
+                    <View
+                      style={[
+                        styles.photoOptionDivider,
+                        { backgroundColor: colors.border },
+                      ]}
+                    />
                     <Pressable
-                      style={({ pressed }) => [styles.photoOption, pressed && { opacity: 0.7 }]}
+                      style={({ pressed }) => [
+                        styles.photoOption,
+                        pressed && { opacity: 0.7 },
+                      ]}
                       onPress={handleRemovePhoto}
                     >
                       <Text style={styles.photoOptionEmoji}>🗑️</Text>
-                      <Text style={[styles.photoOptionText, { color: colors.error }]}>Remove Photo</Text>
+                      <Text
+                        style={[
+                          styles.photoOptionText,
+                          { color: colors.error },
+                        ]}
+                      >
+                        Remove Photo
+                      </Text>
                     </Pressable>
                   </>
                 )}
@@ -171,10 +270,19 @@ export default function FamilySetupScreen() {
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: colors.foreground }]}>Your Name</Text>
+              <Text style={[styles.label, { color: colors.foreground }]}>
+                Your Name
+              </Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
-                placeholder={isElder ? 'e.g., Grandma Rose' : 'e.g., Sarah'}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.foreground,
+                  },
+                ]}
+                placeholder={isElder ? "e.g., Grandma Rose" : "e.g., Sarah"}
                 placeholderTextColor={colors.muted}
                 value={name}
                 onChangeText={setName}
@@ -184,9 +292,18 @@ export default function FamilySetupScreen() {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: colors.foreground }]}>Family Vault Name</Text>
+              <Text style={[styles.label, { color: colors.foreground }]}>
+                Family Vault Name
+              </Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    color: colors.foreground,
+                  },
+                ]}
                 placeholder="e.g., The Johnson Family"
                 placeholderTextColor={colors.muted}
                 value={vaultName}
@@ -202,19 +319,38 @@ export default function FamilySetupScreen() {
           </View>
 
           {/* What to expect */}
-          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.infoTitle, { color: colors.foreground }]}>What happens next?</Text>
+          <View
+            style={[
+              styles.infoCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.infoTitle, { color: colors.foreground }]}>
+              What happens next?
+            </Text>
             {isElder ? (
               <>
-                <Text style={[styles.infoItem, { color: colors.muted }]}>📖 You'll get one question at a time</Text>
-                <Text style={[styles.infoItem, { color: colors.muted }]}>🎙️ Just tap a button to record your answer</Text>
-                <Text style={[styles.infoItem, { color: colors.muted }]}>👨‍👩‍👧 Your family will treasure your stories</Text>
+                <Text style={[styles.infoItem, { color: colors.muted }]}>
+                  📖 You'll get one question at a time
+                </Text>
+                <Text style={[styles.infoItem, { color: colors.muted }]}>
+                  🎙️ Just tap a button to record your answer
+                </Text>
+                <Text style={[styles.infoItem, { color: colors.muted }]}>
+                  👨‍👩‍👧 Your family will treasure your stories
+                </Text>
               </>
             ) : (
               <>
-                <Text style={[styles.infoItem, { color: colors.muted }]}>📬 Invite family members to join</Text>
-                <Text style={[styles.infoItem, { color: colors.muted }]}>🎙️ Record your own memories too</Text>
-                <Text style={[styles.infoItem, { color: colors.muted }]}>🔍 Search and browse the family archive</Text>
+                <Text style={[styles.infoItem, { color: colors.muted }]}>
+                  📬 Invite family members to join
+                </Text>
+                <Text style={[styles.infoItem, { color: colors.muted }]}>
+                  🎙️ Record your own memories too
+                </Text>
+                <Text style={[styles.infoItem, { color: colors.muted }]}>
+                  🔍 Search and browse the family archive
+                </Text>
               </>
             )}
           </View>
@@ -223,14 +359,30 @@ export default function FamilySetupScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.startButton,
-              { backgroundColor: canContinue && !isSubmitting ? colors.primary : colors.border },
-              pressed && canContinue && !isSubmitting && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+              {
+                backgroundColor:
+                  canContinue && !isSubmitting ? colors.primary : colors.border,
+              },
+              pressed &&
+                canContinue &&
+                !isSubmitting && {
+                  opacity: 0.85,
+                  transform: [{ scale: 0.97 }],
+                },
             ]}
             onPress={handleStart}
             disabled={!canContinue || isSubmitting}
           >
-            <Text style={[styles.startText, { color: canContinue && !isSubmitting ? '#FFFFFF' : colors.muted }]}>
-              {isSubmitting ? 'Opening...' : 'Open the Vault ✨'}
+            <Text
+              style={[
+                styles.startText,
+                {
+                  color:
+                    canContinue && !isSubmitting ? "#FFFFFF" : colors.muted,
+                },
+              ]}
+            >
+              {isSubmitting ? "Opening..." : "Open the Vault ✨"}
             </Text>
           </Pressable>
         </ScrollView>
@@ -252,12 +404,12 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
   },
   title: {
     fontSize: 30,
-    fontWeight: '800',
+    fontWeight: "800",
     lineHeight: 38,
   },
   subtitle: {
@@ -272,7 +424,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   input: {
     fontSize: 18,
@@ -293,7 +445,7 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
   infoItem: {
@@ -303,46 +455,46 @@ const styles = StyleSheet.create({
   startButton: {
     paddingVertical: 22,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   startText: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   profileSection: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
   },
   profilePictureButton: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   profileImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   profileInitials: {
     fontSize: 48,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   profileLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   photoOptions: {
     borderRadius: 12,
     borderWidth: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginTop: 8,
   },
   photoOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 16,
     gap: 12,
@@ -352,7 +504,7 @@ const styles = StyleSheet.create({
   },
   photoOptionText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   photoOptionDivider: {
     height: 1,

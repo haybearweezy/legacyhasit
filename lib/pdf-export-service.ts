@@ -1,5 +1,5 @@
-import { Memory, FamilyMember } from '@/shared/app-types';
-import { THEME_META } from '@/constants/prompts';
+import { Memory, FamilyMember } from "@/shared/app-types";
+import { THEME_META } from "@/constants/prompts";
 
 /**
  * Service for generating PDF exports of the family vault.
@@ -12,7 +12,7 @@ export interface PDFExportOptions {
   includeTranscripts?: boolean;
   includeNotes?: boolean;
   includePhotos?: boolean;
-  theme?: 'light' | 'dark' | 'sepia';
+  theme?: "light" | "dark" | "sepia";
 }
 
 export interface PDFExportData {
@@ -42,7 +42,7 @@ export function preparePDFExportData(
   memories: Memory[],
   members: FamilyMember[],
   vaultName: string,
-  options: PDFExportOptions = {}
+  options: PDFExportOptions = {},
 ): PDFExportData {
   const {
     title = `${vaultName} - Legacy Book`,
@@ -52,31 +52,36 @@ export function preparePDFExportData(
   } = options;
 
   // Calculate total duration
-  const totalSeconds = memories.reduce((sum, m) => sum + (m.durationSeconds ?? 0), 0);
+  const totalSeconds = memories.reduce(
+    (sum, m) => sum + (m.durationSeconds ?? 0),
+    0,
+  );
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const totalDuration = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
   // Format memories for PDF
-  const formattedMemories = memories.map(memory => {
+  const formattedMemories = memories.map((memory) => {
     const themeMeta = THEME_META[memory.theme];
-    const date = new Date(memory.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    const date = new Date(memory.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
     const duration = memory.durationSeconds
-      ? `${Math.floor(memory.durationSeconds / 60)}:${String(memory.durationSeconds % 60).padStart(2, '0')}`
-      : '—';
+      ? `${Math.floor(memory.durationSeconds / 60)}:${String(memory.durationSeconds % 60).padStart(2, "0")}`
+      : "—";
 
     return {
       id: memory.id,
       title: memory.title,
-      theme: themeMeta?.label ?? 'Memory',
+      theme: themeMeta?.label ?? "Memory",
       date,
-      recordedBy: memory.recordedBy ?? 'Family Member',
+      recordedBy: memory.recordedBy ?? "Family Member",
       duration,
-      transcript: includeTranscripts ? (memory.transcript ?? undefined) : undefined,
+      transcript: includeTranscripts
+        ? (memory.transcript ?? undefined)
+        : undefined,
       notes: includeNotes ? (memory.notes ?? undefined) : undefined,
       photoUri: includePhotos ? (memory.photoUri ?? undefined) : undefined,
     };
@@ -85,10 +90,10 @@ export function preparePDFExportData(
   return {
     title,
     subtitle: `A collection of family stories and memories`,
-    generatedDate: new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    generatedDate: new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }),
     totalMemories: memories.length,
     totalDuration,
@@ -101,10 +106,12 @@ export function preparePDFExportData(
  * Generate HTML representation of the PDF (for web preview or server-side rendering)
  */
 export function generatePDFHTML(data: PDFExportData): string {
-  const memberList = data.members.map(m => `<li>${m.name} (${m.role})</li>`).join('');
+  const memberList = data.members
+    .map((m) => `<li>${m.name} (${m.role})</li>`)
+    .join("");
   const memoriesList = data.memories
     .map(
-      m => `
+      (m) => `
     <div class="memory-entry">
       <h3>${m.title}</h3>
       <div class="memory-meta">
@@ -113,12 +120,12 @@ export function generatePDFHTML(data: PDFExportData): string {
         <span class="recorder">By ${m.recordedBy}</span>
         <span class="duration">${m.duration}</span>
       </div>
-      ${m.transcript ? `<div class="transcript"><strong>Transcript:</strong><p>${m.transcript}</p></div>` : ''}
-      ${m.notes ? `<div class="notes"><strong>Notes:</strong><p>${m.notes}</p></div>` : ''}
+      ${m.transcript ? `<div class="transcript"><strong>Transcript:</strong><p>${m.transcript}</p></div>` : ""}
+      ${m.notes ? `<div class="notes"><strong>Notes:</strong><p>${m.notes}</p></div>` : ""}
     </div>
-  `
+  `,
     )
-    .join('');
+    .join("");
 
   return `
 <!DOCTYPE html>
@@ -286,7 +293,7 @@ export function generatePDFHTML(data: PDFExportData): string {
     </div>
 
     <div class="footer">
-      <p>This Legacy Book was created with LegacyBox — Preserve the stories behind the photos.</p>
+      <p>This Legacy Book was created with ManyVersions — Preserve the stories behind the photos.</p>
     </div>
   </div>
 </body>
@@ -302,7 +309,7 @@ export async function downloadLegacyBookPDF(
   memories: Memory[],
   members: FamilyMember[],
   vaultName: string,
-  options: PDFExportOptions = {}
+  options: PDFExportOptions = {},
 ): Promise<void> {
   const data = preparePDFExportData(memories, members, vaultName, options);
   const html = generatePDFHTML(data);
@@ -312,8 +319,10 @@ export async function downloadLegacyBookPDF(
   // 2. Use a library like react-pdf or pdfkit
   // 3. Generate the PDF and return a download URL
 
-  console.log('PDF Export Data:', data);
-  console.log('PDF HTML generated. In production, this would be sent to a PDF generation service.');
+  console.log("PDF Export Data:", data);
+  console.log(
+    "PDF HTML generated. In production, this would be sent to a PDF generation service.",
+  );
 
   // Return the HTML for preview or server processing
   return Promise.resolve();
@@ -326,15 +335,15 @@ export async function shareLegacyBook(
   memories: Memory[],
   members: FamilyMember[],
   vaultName: string,
-  method: 'email' | 'file' = 'file'
+  method: "email" | "file" = "file",
 ): Promise<void> {
   const data = preparePDFExportData(memories, members, vaultName);
 
-  if (method === 'email') {
+  if (method === "email") {
     // Stub for email sharing
-    console.log('Email share stub:', data);
+    console.log("Email share stub:", data);
   } else {
     // Stub for file download
-    console.log('File download stub:', data);
+    console.log("File download stub:", data);
   }
 }

@@ -1,4 +1,4 @@
-# LegacyBox — Design Document
+# ManyVersions — Design Document
 
 ## Brand Identity
 

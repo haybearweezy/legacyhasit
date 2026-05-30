@@ -1,8 +1,10 @@
 import { getIdToken } from "./auth";
+import { getApiBaseUrl } from "@/constants/oauth";
 
-const API_BASE = (process.env.EXPO_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
-
-export async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function apiCall<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
   const token = await getIdToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -10,7 +12,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const url = `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const url = `${getApiBaseUrl()}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   const res = await fetch(url, { ...options, headers });
 
   if (!res.ok) {

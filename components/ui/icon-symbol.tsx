@@ -5,17 +5,20 @@ import { SymbolWeight, SymbolViewProps } from "expo-symbols";
 import { ComponentProps } from "react";
 import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 
-type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>;
+type IconMapping = Record<
+  SymbolViewProps["name"],
+  ComponentProps<typeof MaterialIcons>["name"]
+>;
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * SF Symbols to Material Icons mappings for LegacyBox
+ * SF Symbols to Material Icons mappings for ManyVersions
  */
 const MAPPING = {
   // Navigation
   "house.fill": "home",
   "book.fill": "menu-book",
-  "magnifyingglass": "search",
+  magnifyingglass: "search",
   "gearshape.fill": "settings",
   "person.fill": "person",
   "person.2.fill": "group",
@@ -27,19 +30,19 @@ const MAPPING = {
   "play.fill": "play-arrow",
   "pause.fill": "pause",
   "stop.fill": "stop",
-  "plus": "add",
+  plus: "add",
   "trash.fill": "delete",
   "square.and.arrow.up": "share",
-  "pencil": "edit",
-  "checkmark": "check",
-  "xmark": "close",
+  pencil: "edit",
+  checkmark: "check",
+  xmark: "close",
 
   // Content
   "heart.fill": "favorite",
   "star.fill": "star",
-  "waveform": "graphic-eq",
+  waveform: "graphic-eq",
   "clock.fill": "schedule",
-  "calendar": "calendar-today",
+  calendar: "calendar-today",
   "photo.fill": "photo",
   "folder.fill": "folder",
   "doc.text.fill": "description",
@@ -67,5 +70,12 @@ export function IconSymbol({
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  return (
+    <MaterialIcons
+      color={color}
+      size={size}
+      name={MAPPING[name]}
+      style={style}
+    />
+  );
 }

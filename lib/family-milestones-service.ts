@@ -1,5 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FamilyMember } from '@/shared/app-types';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FamilyMember } from "@/shared/app-types";
+import { readMigratedStorageItem } from "@/lib/storage-compat";
 
 /**
  * Family Milestones Service
@@ -9,7 +10,7 @@ import { FamilyMember } from '@/shared/app-types';
 export interface FamilyMilestone {
   id: string;
   memberId: string;
-  type: 'birthday' | 'anniversary' | 'custom';
+  type: "birthday" | "anniversary" | "custom";
   date: string; // ISO format: YYYY-MM-DD
   title: string;
   description?: string;
@@ -22,17 +23,20 @@ export interface UpcomingMilestone extends FamilyMilestone {
   isSoon: boolean; // within 7 days
 }
 
-const MILESTONES_STORAGE_KEY = '@legacybox_family_milestones';
+const MILESTONES_STORAGE_KEY = "@manyversions_family_milestones";
 
 /**
  * Get all family milestones
  */
 export async function getFamilyMilestones(): Promise<FamilyMilestone[]> {
   try {
-    const stored = await AsyncStorage.getItem(MILESTONES_STORAGE_KEY);
+    const stored = await readMigratedStorageItem(
+      MILESTONES_STORAGE_KEY,
+      "_family_milestones",
+    );
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Error getting family milestones:', error);
+    console.error("Error getting family milestones:", error);
     return [];
   }
 }
@@ -40,7 +44,9 @@ export async function getFamilyMilestones(): Promise<FamilyMilestone[]> {
 /**
  * Add a new milestone
  */
-export async function addMilestone(milestone: Omit<FamilyMilestone, 'id'>): Promise<FamilyMilestone> {
+export async function addMilestone(
+  milestone: Omit<FamilyMilestone, "id">,
+): Promise<FamilyMilestone> {
   const newMilestone: FamilyMilestone = {
     ...milestone,
     id: Date.now().toString(),
@@ -48,7 +54,10 @@ export async function addMilestone(milestone: Omit<FamilyMilestone, 'id'>): Prom
 
   const milestones = await getFamilyMilestones();
   milestones.push(newMilestone);
-  await AsyncStorage.setItem(MILESTONES_STORAGE_KEY, JSON.stringify(milestones));
+  await AsyncStorage.setItem(
+    MILESTONES_STORAGE_KEY,
+    JSON.stringify(milestones),
+  );
 
   return newMilestone;
 }
@@ -56,10 +65,13 @@ export async function addMilestone(milestone: Omit<FamilyMilestone, 'id'>): Prom
 /**
  * Update a milestone
  */
-export async function updateMilestone(id: string, updates: Partial<FamilyMilestone>): Promise<void> {
+export async function updateMilestone(
+  id: string,
+  updates: Partial<FamilyMilestone>,
+): Promise<void> {
   const milestones = await getFamilyMilestones();
-  const updated = milestones.map(m =>
-    m.id === id ? { ...m, ...updates } : m
+  const updated = milestones.map((m) =>
+    m.id === id ? { ...m, ...updates } : m,
   );
   await AsyncStorage.setItem(MILESTONES_STORAGE_KEY, JSON.stringify(updated));
 }
@@ -69,7 +81,7 @@ export async function updateMilestone(id: string, updates: Partial<FamilyMilesto
  */
 export async function deleteMilestone(id: string): Promise<void> {
   const milestones = await getFamilyMilestones();
-  const filtered = milestones.filter(m => m.id !== id);
+  const filtered = milestones.filter((m) => m.id !== id);
   await AsyncStorage.setItem(MILESTONES_STORAGE_KEY, JSON.stringify(filtered));
 }
 
@@ -82,13 +94,13 @@ export async function getUpcomingMilestones(): Promise<UpcomingMilestone[]> {
   today.setHours(0, 0, 0, 0);
 
   const upcoming: UpcomingMilestone[] = milestones
-    .map(m => {
+    .map((m) => {
       // Parse the date (YYYY-MM-DD format)
-      const [year, month, day] = m.date.split('-').map(Number);
-      
+      const [year, month, day] = m.date.split("-").map(Number);
+
       // Create a date for this year
       let milestoneDate = new Date(today.getFullYear(), month - 1, day);
-      
+
       // If the date has already passed this year, use next year
       if (milestoneDate < today) {
         milestoneDate = new Date(today.getFullYear() + 1, month - 1, day);
@@ -104,7 +116,7 @@ export async function getUpcomingMilestones(): Promise<UpcomingMilestone[]> {
         isSoon: daysUntil > 0 && daysUntil <= 7,
       };
     })
-    .filter(m => m.daysUntil <= 30)
+    .filter((m) => m.daysUntil <= 30)
     .sort((a, b) => a.daysUntil - b.daysUntil);
 
   return upcoming;
@@ -115,40 +127,50 @@ export async function getUpcomingMilestones(): Promise<UpcomingMilestone[]> {
  */
 export async function getTodaysMilestones(): Promise<FamilyMilestone[]> {
   const upcoming = await getUpcomingMilestones();
-  return upcoming.filter(m => m.isToday);
+  return upcoming.filter((m) => m.isToday);
 }
 
 /**
  * Get milestones for a specific member
  */
-export async function getMemberMilestones(memberId: string): Promise<FamilyMilestone[]> {
+export async function getMemberMilestones(
+  memberId: string,
+): Promise<FamilyMilestone[]> {
   const milestones = await getFamilyMilestones();
-  return milestones.filter(m => m.memberId === memberId);
+  return milestones.filter((m) => m.memberId === memberId);
 }
 
 /**
  * Add birthday for a member
  */
-export async function addBirthday(memberId: string, date: string, memberName: string): Promise<FamilyMilestone> {
+export async function addBirthday(
+  memberId: string,
+  date: string,
+  memberName: string,
+): Promise<FamilyMilestone> {
   return addMilestone({
     memberId,
-    type: 'birthday',
+    type: "birthday",
     date,
     title: `${memberName}'s Birthday`,
-    emoji: '🎂',
+    emoji: "🎂",
   });
 }
 
 /**
  * Add anniversary for a member
  */
-export async function addAnniversary(memberId: string, date: string, title: string): Promise<FamilyMilestone> {
+export async function addAnniversary(
+  memberId: string,
+  date: string,
+  title: string,
+): Promise<FamilyMilestone> {
   return addMilestone({
     memberId,
-    type: 'anniversary',
+    type: "anniversary",
     date,
     title,
-    emoji: '💍',
+    emoji: "💍",
   });
 }
 
@@ -156,16 +178,16 @@ export async function addAnniversary(memberId: string, date: string, title: stri
  * Format milestone date for display
  */
 export function formatMilestoneDate(date: string): string {
-  const [year, month, day] = date.split('-');
+  const [year, month, day] = date.split("-");
   const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-  return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  return dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 }
 
 /**
  * Get age from birth date
  */
 export function calculateAge(birthDate: string): number {
-  const [year] = birthDate.split('-').map(Number);
+  const [year] = birthDate.split("-").map(Number);
   return new Date().getFullYear() - year;
 }
 
@@ -174,26 +196,30 @@ export function calculateAge(birthDate: string): number {
  */
 export async function isBirthdayToday(memberId: string): Promise<boolean> {
   const todayMilestones = await getTodaysMilestones();
-  return todayMilestones.some(m => m.memberId === memberId && m.type === 'birthday');
+  return todayMilestones.some(
+    (m) => m.memberId === memberId && m.type === "birthday",
+  );
 }
 
 /**
  * Get suggested prompts for a milestone
  */
-export function getSuggestedPromptsForMilestone(milestone: FamilyMilestone): string[] {
-  if (milestone.type === 'birthday') {
+export function getSuggestedPromptsForMilestone(
+  milestone: FamilyMilestone,
+): string[] {
+  if (milestone.type === "birthday") {
     return [
-      'Tell us a favorite memory with this person',
-      'What do you love most about them?',
-      'Share a funny story from their life',
-      'What advice would you give them?',
+      "Tell us a favorite memory with this person",
+      "What do you love most about them?",
+      "Share a funny story from their life",
+      "What advice would you give them?",
     ];
-  } else if (milestone.type === 'anniversary') {
+  } else if (milestone.type === "anniversary") {
     return [
-      'How did you meet?',
-      'What was your first impression?',
-      'Share your favorite moment together',
-      'What has this relationship meant to you?',
+      "How did you meet?",
+      "What was your first impression?",
+      "Share your favorite moment together",
+      "What has this relationship meant to you?",
     ];
   }
   return [];

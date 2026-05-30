@@ -23,7 +23,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   appName: "ManyVersions",
   appSlug: "manyversions",
-  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663620448478/kispYccukCinDUf2vKutnP/icon-Apr5fSgzuuUCJREcDhzQtk.png",
+  logoUrl: "./assets/images/react-logo.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -37,7 +37,7 @@ const config: ExpoConfig = {
   icon: "./assets/images/react-logo.png",
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
-  newArchEnabled: true,
+  newArchEnabled: false,
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
@@ -48,7 +48,7 @@ const config: ExpoConfig = {
   android: {
     adaptiveIcon: {
       backgroundColor: "#FDF8F3",
-      foregroundImage: "/manus-storage/android-icon-foreground_a26bed46.png",
+      foregroundImage: "./assets/images/partial-react-logo.png",
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
@@ -68,7 +68,7 @@ const config: ExpoConfig = {
   web: {
     bundler: "metro",
     output: "static",
-    favicon: "/manus-storage/favicon_f5c42464.png",
+    favicon: "./assets/images/react-logo.png",
   },
   plugins: [
     "expo-router",
@@ -94,7 +94,7 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "/manus-storage/splash-icon_671bed4b.png",
+        image: "./assets/images/react-logo.png",
         imageWidth: 200,
         resizeMode: "contain",
         backgroundColor: "#FDF8F3",

@@ -1,5 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Memory, FamilyMember } from '@/shared/app-types';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Memory, FamilyMember } from "@/shared/app-types";
+import { readMigratedStorageItem } from "@/lib/storage-compat";
 
 /**
  * Weekly Digest Service
@@ -24,8 +25,8 @@ export interface WeeklyDigest {
   summary: string;
 }
 
-const DIGESTS_STORAGE_KEY = '@legacybox_weekly_digests';
-const LAST_DIGEST_DATE_KEY = '@legacybox_last_digest_date';
+const DIGESTS_STORAGE_KEY = "@manyversions_weekly_digests";
+const LAST_DIGEST_DATE_KEY = "@manyversions_last_digest_date";
 
 /**
  * Generate a weekly digest
@@ -33,7 +34,7 @@ const LAST_DIGEST_DATE_KEY = '@legacybox_last_digest_date';
 export async function generateWeeklyDigest(
   memories: Memory[],
   members: FamilyMember[],
-  vaultName: string
+  vaultName: string,
 ): Promise<WeeklyDigest> {
   const today = new Date();
   const weekStartDate = new Date(today);
@@ -45,7 +46,7 @@ export async function generateWeeklyDigest(
   weekEndDate.setHours(23, 59, 59, 999);
 
   // Filter memories from this week
-  const newMemories = memories.filter(m => {
+  const newMemories = memories.filter((m) => {
     const memDate = new Date(m.createdAt);
     return memDate >= weekStartDate && memDate <= weekEndDate;
   });
@@ -53,9 +54,9 @@ export async function generateWeeklyDigest(
   // Count comments and reactions
   let newComments = 0;
   let newReactions = 0;
-  newMemories.forEach(m => {
+  newMemories.forEach((m) => {
     newComments += m.comments?.length ?? 0;
-    m.comments?.forEach(c => {
+    m.comments?.forEach((c) => {
       newReactions += Object.values(c.reactions).flat().length;
     });
   });
@@ -63,8 +64,9 @@ export async function generateWeeklyDigest(
   // Find top memory (most engaged)
   let topMemory: Memory | undefined;
   let maxEngagement = 0;
-  newMemories.forEach(m => {
-    const engagement = (m.comments?.length ?? 0) + 
+  newMemories.forEach((m) => {
+    const engagement =
+      (m.comments?.length ?? 0) +
       Object.values(m.comments?.[0]?.reactions ?? {}).flat().length;
     if (engagement > maxEngagement) {
       maxEngagement = engagement;
@@ -73,24 +75,35 @@ export async function generateWeeklyDigest(
   });
 
   // Member highlights
-  const memberHighlights = members.map(member => {
-    const memberStories = newMemories.filter(m => m.recordedByMemberId === member.id);
-    let engagementScore = 0;
-    memberStories.forEach(m => {
-      engagementScore += (m.comments?.length ?? 0) * 2;
-      engagementScore += Object.values(m.comments?.[0]?.reactions ?? {}).flat().length;
-    });
+  const memberHighlights = members
+    .map((member) => {
+      const memberStories = newMemories.filter(
+        (m) => m.recordedByMemberId === member.id,
+      );
+      let engagementScore = 0;
+      memberStories.forEach((m) => {
+        engagementScore += (m.comments?.length ?? 0) * 2;
+        engagementScore += Object.values(
+          m.comments?.[0]?.reactions ?? {},
+        ).flat().length;
+      });
 
-    return {
-      memberId: member.id,
-      memberName: member.name,
-      storiesRecorded: memberStories.length,
-      engagementScore,
-    };
-  }).filter(h => h.storiesRecorded > 0 || h.engagementScore > 0);
+      return {
+        memberId: member.id,
+        memberName: member.name,
+        storiesRecorded: memberStories.length,
+        engagementScore,
+      };
+    })
+    .filter((h) => h.storiesRecorded > 0 || h.engagementScore > 0);
 
   // Generate summary
-  const summary = generateDigestSummary(vaultName, newMemories.length, newComments, newReactions);
+  const summary = generateDigestSummary(
+    vaultName,
+    newMemories.length,
+    newComments,
+    newReactions,
+  );
 
   const digest: WeeklyDigest = {
     id: Date.now().toString(),
@@ -115,15 +128,15 @@ export async function saveWeeklyDigest(digest: WeeklyDigest): Promise<void> {
   try {
     const digests = await getWeeklyDigests();
     digests.push(digest);
-    
+
     // Keep only last 12 weeks
     const trimmed = digests.slice(-12);
     await AsyncStorage.setItem(DIGESTS_STORAGE_KEY, JSON.stringify(trimmed));
-    
+
     // Update last digest date
     await AsyncStorage.setItem(LAST_DIGEST_DATE_KEY, digest.generatedDate);
   } catch (error) {
-    console.error('Error saving weekly digest:', error);
+    console.error("Error saving weekly digest:", error);
   }
 }
 
@@ -132,10 +145,13 @@ export async function saveWeeklyDigest(digest: WeeklyDigest): Promise<void> {
  */
 export async function getWeeklyDigests(): Promise<WeeklyDigest[]> {
   try {
-    const stored = await AsyncStorage.getItem(DIGESTS_STORAGE_KEY);
+    const stored = await readMigratedStorageItem(
+      DIGESTS_STORAGE_KEY,
+      "_weekly_digests",
+    );
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Error getting weekly digests:', error);
+    console.error("Error getting weekly digests:", error);
     return [];
   }
 }
@@ -153,7 +169,10 @@ export async function getLastDigest(): Promise<WeeklyDigest | null> {
  */
 export async function shouldGenerateDigestToday(): Promise<boolean> {
   try {
-    const lastDigestDateStr = await AsyncStorage.getItem(LAST_DIGEST_DATE_KEY);
+    const lastDigestDateStr = await readMigratedStorageItem(
+      LAST_DIGEST_DATE_KEY,
+      "_last_digest_date",
+    );
     if (!lastDigestDateStr) return true;
 
     const lastDigestDate = new Date(lastDigestDateStr);
@@ -163,10 +182,12 @@ export async function shouldGenerateDigestToday(): Promise<boolean> {
     if (today.getDay() !== 0) return false;
 
     // Check if last digest was generated this week
-    const daysSinceLastDigest = Math.floor((today.getTime() - lastDigestDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceLastDigest = Math.floor(
+      (today.getTime() - lastDigestDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return daysSinceLastDigest >= 7;
   } catch (error) {
-    console.error('Error checking if digest should be generated:', error);
+    console.error("Error checking if digest should be generated:", error);
     return false;
   }
 }
@@ -174,16 +195,21 @@ export async function shouldGenerateDigestToday(): Promise<boolean> {
 /**
  * Generate digest summary text
  */
-function generateDigestSummary(vaultName: string, memoriesCount: number, commentsCount: number, reactionsCount: number): string {
+function generateDigestSummary(
+  vaultName: string,
+  memoriesCount: number,
+  commentsCount: number,
+  reactionsCount: number,
+): string {
   let summary = `📖 ${vaultName} Weekly Digest\n\n`;
-  summary += `This week, your family vault grew with ${memoriesCount} new ${memoriesCount === 1 ? 'story' : 'stories'}.\n`;
+  summary += `This week, your family vault grew with ${memoriesCount} new ${memoriesCount === 1 ? "story" : "stories"}.\n`;
 
   if (commentsCount > 0) {
-    summary += `Family members left ${commentsCount} ${commentsCount === 1 ? 'comment' : 'comments'} `;
+    summary += `Family members left ${commentsCount} ${commentsCount === 1 ? "comment" : "comments"} `;
   }
 
   if (reactionsCount > 0) {
-    summary += `and ${reactionsCount} ${reactionsCount === 1 ? 'reaction' : 'reactions'}. `;
+    summary += `and ${reactionsCount} ${reactionsCount === 1 ? "reaction" : "reactions"}. `;
   }
 
   summary += `\n\nKeep sharing your precious memories! 💕`;
@@ -222,27 +248,39 @@ export function formatDigestForEmail(digest: WeeklyDigest): string {
             <p><span class="stat">${digest.newReactions}</span> reactions</p>
           </div>
 
-          ${digest.topMemory ? `
+          ${
+            digest.topMemory
+              ? `
             <div class="section">
               <h2>Most Loved Story</h2>
               <div class="memory">
                 <strong>${digest.topMemory.title}</strong>
-                <p>${digest.topMemory.transcript?.substring(0, 150) || 'No transcript available'}...</p>
+                <p>${digest.topMemory.transcript?.substring(0, 150) || "No transcript available"}...</p>
               </div>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
 
-          ${digest.memberHighlights.length > 0 ? `
+          ${
+            digest.memberHighlights.length > 0
+              ? `
             <div class="section">
               <h2>Family Highlights</h2>
-              ${digest.memberHighlights.map(h => `
-                <p><strong>${h.memberName}</strong> recorded ${h.storiesRecorded} ${h.storiesRecorded === 1 ? 'story' : 'stories'}</p>
-              `).join('')}
+              ${digest.memberHighlights
+                .map(
+                  (h) => `
+                <p><strong>${h.memberName}</strong> recorded ${h.storiesRecorded} ${h.storiesRecorded === 1 ? "story" : "stories"}</p>
+              `,
+                )
+                .join("")}
             </div>
-          ` : ''}
+          `
+              : ""
+          }
 
           <div class="footer">
-            <p>LegacyBox — Preserve the stories behind the photos</p>
+            <p>ManyVersions — Preserve the stories behind the photos</p>
           </div>
         </div>
       </body>

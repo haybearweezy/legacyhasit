@@ -2,7 +2,7 @@
 
 ## Setup & Configuration
 - [x] Update theme colors (warm walnut palette — amber #C8860A, walnut brown)
-- [x] Update app.config.ts with LegacyBox branding
+- [x] Update app.config.ts with ManyVersions branding
 - [x] Generate and set app icon/logo (glowing book with heart pages)
 - [x] Add all required icon mappings to icon-symbol.tsx
 - [x] Fix TypeScript errors (storageProxy, theme tokens)

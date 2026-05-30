@@ -1,6 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
-import { Memory, Comment } from '@/shared/app-types';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
+import { Memory, Comment } from "@/shared/app-types";
+import { readMigratedStorageItem } from "@/lib/storage-compat";
 
 /**
  * Notifications Service
@@ -10,7 +11,7 @@ import { Memory, Comment } from '@/shared/app-types';
 
 export interface Notification {
   id: string;
-  type: 'reaction' | 'comment' | 'milestone' | 'digest' | 'story_request';
+  type: "reaction" | "comment" | "milestone" | "digest" | "story_request";
   title: string;
   message: string;
   emoji: string;
@@ -21,8 +22,8 @@ export interface Notification {
   actionUrl?: string;
 }
 
-const NOTIFICATIONS_STORAGE_KEY = '@legacybox_notifications';
-const NOTIFICATION_SETTINGS_KEY = '@legacybox_notification_settings';
+const NOTIFICATIONS_STORAGE_KEY = "@manyversions_notifications";
+const NOTIFICATION_SETTINGS_KEY = "@manyversions_notification_settings";
 
 export interface NotificationSettings {
   enableReactionNotifications: boolean;
@@ -30,7 +31,7 @@ export interface NotificationSettings {
   enableMilestoneNotifications: boolean;
   enableDigestNotifications: boolean;
   enableStoryRequestNotifications: boolean;
-  digestFrequency: 'daily' | 'weekly' | 'never';
+  digestFrequency: "daily" | "weekly" | "never";
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -39,7 +40,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   enableMilestoneNotifications: true,
   enableDigestNotifications: true,
   enableStoryRequestNotifications: true,
-  digestFrequency: 'weekly',
+  digestFrequency: "weekly",
 };
 
 /**
@@ -47,10 +48,13 @@ const DEFAULT_SETTINGS: NotificationSettings = {
  */
 export async function getNotifications(): Promise<Notification[]> {
   try {
-    const stored = await AsyncStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    const stored = await readMigratedStorageItem(
+      NOTIFICATIONS_STORAGE_KEY,
+      "_notifications",
+    );
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Error getting notifications:', error);
+    console.error("Error getting notifications:", error);
     return [];
   }
 }
@@ -58,7 +62,9 @@ export async function getNotifications(): Promise<Notification[]> {
 /**
  * Add a new notification
  */
-export async function addNotification(notification: Omit<Notification, 'id' | 'timestamp' | 'read'>): Promise<Notification> {
+export async function addNotification(
+  notification: Omit<Notification, "id" | "timestamp" | "read">,
+): Promise<Notification> {
   const newNotification: Notification = {
     ...notification,
     id: Date.now().toString(),
@@ -68,10 +74,13 @@ export async function addNotification(notification: Omit<Notification, 'id' | 't
 
   const notifications = await getNotifications();
   notifications.unshift(newNotification);
-  
+
   // Keep only last 50 notifications
   const trimmed = notifications.slice(0, 50);
-  await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(trimmed));
+  await AsyncStorage.setItem(
+    NOTIFICATIONS_STORAGE_KEY,
+    JSON.stringify(trimmed),
+  );
 
   return newNotification;
 }
@@ -79,12 +88,17 @@ export async function addNotification(notification: Omit<Notification, 'id' | 't
 /**
  * Mark notification as read
  */
-export async function markNotificationAsRead(notificationId: string): Promise<void> {
+export async function markNotificationAsRead(
+  notificationId: string,
+): Promise<void> {
   const notifications = await getNotifications();
-  const updated = notifications.map(n =>
-    n.id === notificationId ? { ...n, read: true } : n
+  const updated = notifications.map((n) =>
+    n.id === notificationId ? { ...n, read: true } : n,
   );
-  await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updated));
+  await AsyncStorage.setItem(
+    NOTIFICATIONS_STORAGE_KEY,
+    JSON.stringify(updated),
+  );
 }
 
 /**
@@ -92,17 +106,25 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
  */
 export async function markAllNotificationsAsRead(): Promise<void> {
   const notifications = await getNotifications();
-  const updated = notifications.map(n => ({ ...n, read: true }));
-  await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updated));
+  const updated = notifications.map((n) => ({ ...n, read: true }));
+  await AsyncStorage.setItem(
+    NOTIFICATIONS_STORAGE_KEY,
+    JSON.stringify(updated),
+  );
 }
 
 /**
  * Delete a notification
  */
-export async function deleteNotification(notificationId: string): Promise<void> {
+export async function deleteNotification(
+  notificationId: string,
+): Promise<void> {
   const notifications = await getNotifications();
-  const filtered = notifications.filter(n => n.id !== notificationId);
-  await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(filtered));
+  const filtered = notifications.filter((n) => n.id !== notificationId);
+  await AsyncStorage.setItem(
+    NOTIFICATIONS_STORAGE_KEY,
+    JSON.stringify(filtered),
+  );
 }
 
 /**
@@ -110,7 +132,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
  */
 export async function getUnreadCount(): Promise<number> {
   const notifications = await getNotifications();
-  return notifications.filter(n => !n.read).length;
+  return notifications.filter((n) => !n.read).length;
 }
 
 /**
@@ -121,10 +143,10 @@ export async function createReactionNotification(
   emoji: string,
   memoryTitle: string,
   memoryId: string,
-  memberId: string
+  memberId: string,
 ): Promise<Notification> {
   return addNotification({
-    type: 'reaction',
+    type: "reaction",
     title: `${memberName} reacted to your story`,
     message: `"${memoryTitle}" received a ${emoji}`,
     emoji,
@@ -142,13 +164,13 @@ export async function createCommentNotification(
   commentText: string,
   memoryTitle: string,
   memoryId: string,
-  memberId: string
+  memberId: string,
 ): Promise<Notification> {
   return addNotification({
-    type: 'comment',
+    type: "comment",
     title: `${memberName} commented on your story`,
-    message: `"${commentText.substring(0, 50)}${commentText.length > 50 ? '...' : ''}"`,
-    emoji: '💬',
+    message: `"${commentText.substring(0, 50)}${commentText.length > 50 ? "..." : ""}"`,
+    emoji: "💬",
     relatedMemoryId: memoryId,
     relatedMemberId: memberId,
     actionUrl: `/memory/${memoryId}`,
@@ -160,12 +182,12 @@ export async function createCommentNotification(
  */
 export async function createMilestoneNotification(
   memberName: string,
-  milestoneType: 'birthday' | 'anniversary',
-  date: string
+  milestoneType: "birthday" | "anniversary",
+  date: string,
 ): Promise<Notification> {
-  const emoji = milestoneType === 'birthday' ? '🎂' : '💍';
+  const emoji = milestoneType === "birthday" ? "🎂" : "💍";
   return addNotification({
-    type: 'milestone',
+    type: "milestone",
     title: `${memberName}'s ${milestoneType} is coming up!`,
     message: `${date} — Consider recording a special message`,
     emoji,
@@ -177,14 +199,14 @@ export async function createMilestoneNotification(
  */
 export async function createStoryRequestNotification(
   memberName: string,
-  prompt: string
+  prompt: string,
 ): Promise<Notification> {
   return addNotification({
-    type: 'story_request',
+    type: "story_request",
     title: `${memberName} wants to hear a story`,
     message: `"${prompt}"`,
-    emoji: '❓',
-    actionUrl: '/record',
+    emoji: "❓",
+    actionUrl: "/record",
   });
 }
 
@@ -193,10 +215,13 @@ export async function createStoryRequestNotification(
  */
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   try {
-    const stored = await AsyncStorage.getItem(NOTIFICATION_SETTINGS_KEY);
+    const stored = await readMigratedStorageItem(
+      NOTIFICATION_SETTINGS_KEY,
+      "_notification_settings",
+    );
     return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
   } catch (error) {
-    console.error('Error getting notification settings:', error);
+    console.error("Error getting notification settings:", error);
     return DEFAULT_SETTINGS;
   }
 }
@@ -204,20 +229,27 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
 /**
  * Update notification settings
  */
-export async function updateNotificationSettings(settings: Partial<NotificationSettings>): Promise<void> {
+export async function updateNotificationSettings(
+  settings: Partial<NotificationSettings>,
+): Promise<void> {
   try {
     const current = await getNotificationSettings();
     const updated = { ...current, ...settings };
-    await AsyncStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem(
+      NOTIFICATION_SETTINGS_KEY,
+      JSON.stringify(updated),
+    );
   } catch (error) {
-    console.error('Error updating notification settings:', error);
+    console.error("Error updating notification settings:", error);
   }
 }
 
 /**
  * Toggle a specific notification type
  */
-export async function toggleNotificationType(type: keyof Omit<NotificationSettings, 'digestFrequency'>): Promise<boolean> {
+export async function toggleNotificationType(
+  type: keyof Omit<NotificationSettings, "digestFrequency">,
+): Promise<boolean> {
   const settings = await getNotificationSettings();
   const newValue = !settings[type];
   await updateNotificationSettings({ [type]: newValue });
@@ -227,27 +259,32 @@ export async function toggleNotificationType(type: keyof Omit<NotificationSettin
 /**
  * Check if a notification type is enabled
  */
-export async function isNotificationTypeEnabled(type: 'reaction' | 'comment' | 'milestone' | 'digest' | 'story_request'): Promise<boolean> {
+export async function isNotificationTypeEnabled(
+  type: "reaction" | "comment" | "milestone" | "digest" | "story_request",
+): Promise<boolean> {
   const settings = await getNotificationSettings();
-  const settingKey = `enable${type.charAt(0).toUpperCase() + type.slice(1)}Notifications` as keyof NotificationSettings;
+  const settingKey =
+    `enable${type.charAt(0).toUpperCase() + type.slice(1)}Notifications` as keyof NotificationSettings;
   return (settings[settingKey] as boolean) ?? true;
 }
 
 /**
  * Send an immediate push notification
  */
-export async function sendPushNotification(notification: Notification): Promise<void> {
+export async function sendPushNotification(
+  notification: Notification,
+): Promise<void> {
   const { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') return;
+  if (status !== "granted") return;
 
   await Notifications.scheduleNotificationAsync({
     content: {
       title: notification.title,
       body: notification.message,
-      data: { 
+      data: {
         url: notification.actionUrl,
         memoryId: notification.relatedMemoryId,
-        memberId: notification.relatedMemberId
+        memberId: notification.relatedMemberId,
       },
     },
     trigger: null,
@@ -257,18 +294,21 @@ export async function sendPushNotification(notification: Notification): Promise<
 /**
  * Schedule a push notification for later
  */
-export async function scheduleNotification(notification: Notification, delayMs: number): Promise<void> {
+export async function scheduleNotification(
+  notification: Notification,
+  delayMs: number,
+): Promise<void> {
   const { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') return;
+  if (status !== "granted") return;
 
   await Notifications.scheduleNotificationAsync({
     content: {
       title: notification.title,
       body: notification.message,
-      data: { 
+      data: {
         url: notification.actionUrl,
         memoryId: notification.relatedMemoryId,
-        memberId: notification.relatedMemberId
+        memberId: notification.relatedMemberId,
       },
     },
     trigger: {

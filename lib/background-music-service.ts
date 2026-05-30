@@ -4,7 +4,13 @@
  * This is a stub that can be extended with actual audio playback.
  */
 
-export type MusicTrack = 'piano' | 'nature' | 'jazz' | 'classical' | 'ambient' | 'none';
+export type MusicTrack =
+  | "piano"
+  | "nature"
+  | "jazz"
+  | "classical"
+  | "ambient"
+  | "none";
 
 export interface MusicTrackInfo {
   id: MusicTrack;
@@ -16,52 +22,52 @@ export interface MusicTrackInfo {
 
 export const AVAILABLE_MUSIC_TRACKS: Record<MusicTrack, MusicTrackInfo> = {
   piano: {
-    id: 'piano',
-    name: 'Gentle Piano',
-    description: 'Soft, reflective piano melodies',
-    emoji: '🎹',
-    audioUrl: 'https://example.com/music/piano.mp3',
+    id: "piano",
+    name: "Gentle Piano",
+    description: "Soft, reflective piano melodies",
+    emoji: "🎹",
+    audioUrl: "https://example.com/music/piano.mp3",
   },
   nature: {
-    id: 'nature',
-    name: 'Nature Sounds',
-    description: 'Peaceful birds and flowing water',
-    emoji: '🌿',
-    audioUrl: 'https://example.com/music/nature.mp3',
+    id: "nature",
+    name: "Nature Sounds",
+    description: "Peaceful birds and flowing water",
+    emoji: "🌿",
+    audioUrl: "https://example.com/music/nature.mp3",
   },
   jazz: {
-    id: 'jazz',
-    name: 'Warm Jazz',
-    description: 'Smooth, nostalgic jazz vibes',
-    emoji: '🎷',
-    audioUrl: 'https://example.com/music/jazz.mp3',
+    id: "jazz",
+    name: "Warm Jazz",
+    description: "Smooth, nostalgic jazz vibes",
+    emoji: "🎷",
+    audioUrl: "https://example.com/music/jazz.mp3",
   },
   classical: {
-    id: 'classical',
-    name: 'Classical',
-    description: 'Timeless classical compositions',
-    emoji: '🎻',
-    audioUrl: 'https://example.com/music/classical.mp3',
+    id: "classical",
+    name: "Classical",
+    description: "Timeless classical compositions",
+    emoji: "🎻",
+    audioUrl: "https://example.com/music/classical.mp3",
   },
   ambient: {
-    id: 'ambient',
-    name: 'Ambient',
-    description: 'Ethereal, atmospheric soundscapes',
-    emoji: '🌌',
-    audioUrl: 'https://example.com/music/ambient.mp3',
+    id: "ambient",
+    name: "Ambient",
+    description: "Ethereal, atmospheric soundscapes",
+    emoji: "🌌",
+    audioUrl: "https://example.com/music/ambient.mp3",
   },
   none: {
-    id: 'none',
-    name: 'No Music',
-    description: 'Play without background music',
-    emoji: '🔇',
+    id: "none",
+    name: "No Music",
+    description: "Play without background music",
+    emoji: "🔇",
   },
 };
 
 /**
  * Music preference storage key
  */
-const MUSIC_PREFERENCE_KEY = '@legacybox_music_preference';
+const MUSIC_PREFERENCE_KEY = "@manyversions_music_preference";
 
 /**
  * Get the user's preferred background music track
@@ -70,10 +76,10 @@ export async function getPreferredMusicTrack(): Promise<MusicTrack> {
   try {
     // In a real app, this would read from AsyncStorage
     // For now, return the default
-    return 'piano';
+    return "piano";
   } catch (error) {
-    console.error('Error getting music preference:', error);
-    return 'none';
+    console.error("Error getting music preference:", error);
+    return "none";
   }
 }
 
@@ -85,7 +91,7 @@ export async function setPreferredMusicTrack(track: MusicTrack): Promise<void> {
     // In a real app, this would write to AsyncStorage
     console.log(`Music preference set to: ${track}`);
   } catch (error) {
-    console.error('Error setting music preference:', error);
+    console.error("Error setting music preference:", error);
   }
 }
 
@@ -107,14 +113,19 @@ export function getMusicTrackInfo(track: MusicTrack): MusicTrackInfo | null {
  * Stub for playing background music during memory playback
  * In production, this would use expo-av or similar library
  */
-export async function playBackgroundMusic(track: MusicTrack, volume: number = 0.3): Promise<void> {
+export async function playBackgroundMusic(
+  track: MusicTrack,
+  volume: number = 0.3,
+): Promise<void> {
   const trackInfo = getMusicTrackInfo(track);
-  if (!trackInfo || track === 'none') {
-    console.log('No background music playing');
+  if (!trackInfo || track === "none") {
+    console.log("No background music playing");
     return;
   }
 
-  console.log(`Playing background music: ${trackInfo.name} at volume ${volume}`);
+  console.log(
+    `Playing background music: ${trackInfo.name} at volume ${volume}`,
+  );
   // In production: use expo-av to load and play the audio file
 }
 
@@ -122,7 +133,7 @@ export async function playBackgroundMusic(track: MusicTrack, volume: number = 0.
  * Stop background music playback
  */
 export async function stopBackgroundMusic(): Promise<void> {
-  console.log('Background music stopped');
+  console.log("Background music stopped");
   // In production: use expo-av to stop the audio
 }
 

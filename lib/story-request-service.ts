@@ -1,4 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { readMigratedStorageItem } from "@/lib/storage-compat";
 
 /**
  * Story Request Service
@@ -15,20 +16,23 @@ export interface StoryRequest {
   createdAt: string;
   respondedAt?: string;
   respondedWithMemoryId?: string;
-  status: 'pending' | 'responded' | 'declined';
+  status: "pending" | "responded" | "declined";
 }
 
-const STORY_REQUESTS_STORAGE_KEY = '@legacybox_story_requests';
+const STORY_REQUESTS_STORAGE_KEY = "@manyversions_story_requests";
 
 /**
  * Get all story requests
  */
 export async function getStoryRequests(): Promise<StoryRequest[]> {
   try {
-    const stored = await AsyncStorage.getItem(STORY_REQUESTS_STORAGE_KEY);
+    const stored = await readMigratedStorageItem(
+      STORY_REQUESTS_STORAGE_KEY,
+      "_story_requests",
+    );
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Error getting story requests:', error);
+    console.error("Error getting story requests:", error);
     return [];
   }
 }
@@ -41,7 +45,7 @@ export async function createStoryRequest(
   fromMemberName: string,
   toMemberId: string,
   prompt: string,
-  description?: string
+  description?: string,
 ): Promise<StoryRequest> {
   const newRequest: StoryRequest = {
     id: Date.now().toString(),
@@ -51,12 +55,15 @@ export async function createStoryRequest(
     prompt,
     description,
     createdAt: new Date().toISOString(),
-    status: 'pending',
+    status: "pending",
   };
 
   const requests = await getStoryRequests();
   requests.push(newRequest);
-  await AsyncStorage.setItem(STORY_REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+  await AsyncStorage.setItem(
+    STORY_REQUESTS_STORAGE_KEY,
+    JSON.stringify(requests),
+  );
 
   return newRequest;
 }
@@ -64,17 +71,23 @@ export async function createStoryRequest(
 /**
  * Get pending requests for a member
  */
-export async function getPendingRequests(memberId: string): Promise<StoryRequest[]> {
+export async function getPendingRequests(
+  memberId: string,
+): Promise<StoryRequest[]> {
   const requests = await getStoryRequests();
-  return requests.filter(r => r.toMemberId === memberId && r.status === 'pending');
+  return requests.filter(
+    (r) => r.toMemberId === memberId && r.status === "pending",
+  );
 }
 
 /**
  * Get requests sent by a member
  */
-export async function getRequestsSentByMember(memberId: string): Promise<StoryRequest[]> {
+export async function getRequestsSentByMember(
+  memberId: string,
+): Promise<StoryRequest[]> {
   const requests = await getStoryRequests();
-  return requests.filter(r => r.fromMemberId === memberId);
+  return requests.filter((r) => r.fromMemberId === memberId);
 }
 
 /**
@@ -82,20 +95,23 @@ export async function getRequestsSentByMember(memberId: string): Promise<StoryRe
  */
 export async function markRequestAsResponded(
   requestId: string,
-  memoryId: string
+  memoryId: string,
 ): Promise<void> {
   const requests = await getStoryRequests();
-  const updated = requests.map(r =>
+  const updated = requests.map((r) =>
     r.id === requestId
       ? {
           ...r,
-          status: 'responded',
+          status: "responded",
           respondedAt: new Date().toISOString(),
           respondedWithMemoryId: memoryId,
         }
-      : r
+      : r,
   );
-  await AsyncStorage.setItem(STORY_REQUESTS_STORAGE_KEY, JSON.stringify(updated));
+  await AsyncStorage.setItem(
+    STORY_REQUESTS_STORAGE_KEY,
+    JSON.stringify(updated),
+  );
 }
 
 /**
@@ -103,16 +119,19 @@ export async function markRequestAsResponded(
  */
 export async function markRequestAsDeclined(requestId: string): Promise<void> {
   const requests = await getStoryRequests();
-  const updated = requests.map(r =>
+  const updated = requests.map((r) =>
     r.id === requestId
       ? {
           ...r,
-          status: 'declined',
+          status: "declined",
           respondedAt: new Date().toISOString(),
         }
-      : r
+      : r,
   );
-  await AsyncStorage.setItem(STORY_REQUESTS_STORAGE_KEY, JSON.stringify(updated));
+  await AsyncStorage.setItem(
+    STORY_REQUESTS_STORAGE_KEY,
+    JSON.stringify(updated),
+  );
 }
 
 /**
@@ -120,17 +139,24 @@ export async function markRequestAsDeclined(requestId: string): Promise<void> {
  */
 export async function deleteStoryRequest(requestId: string): Promise<void> {
   const requests = await getStoryRequests();
-  const filtered = requests.filter(r => r.id !== requestId);
-  await AsyncStorage.setItem(STORY_REQUESTS_STORAGE_KEY, JSON.stringify(filtered));
+  const filtered = requests.filter((r) => r.id !== requestId);
+  await AsyncStorage.setItem(
+    STORY_REQUESTS_STORAGE_KEY,
+    JSON.stringify(filtered),
+  );
 }
 
 /**
  * Get response rate for a member (how many requests they've responded to)
  */
-export async function getResponseRate(memberId: string): Promise<{ responded: number; total: number; percentage: number }> {
+export async function getResponseRate(
+  memberId: string,
+): Promise<{ responded: number; total: number; percentage: number }> {
   const requests = await getStoryRequests();
-  const memberRequests = requests.filter(r => r.toMemberId === memberId);
-  const responded = memberRequests.filter(r => r.status === 'responded').length;
+  const memberRequests = requests.filter((r) => r.toMemberId === memberId);
+  const responded = memberRequests.filter(
+    (r) => r.status === "responded",
+  ).length;
   const total = memberRequests.length;
   const percentage = total > 0 ? Math.round((responded / total) * 100) : 0;
 
@@ -142,35 +168,39 @@ export async function getResponseRate(memberId: string): Promise<{ responded: nu
  */
 export function getSuggestedPrompts(): string[] {
   return [
-    'Tell us about your childhood home',
-    'What was your first job like?',
-    'Share a memorable travel experience',
-    'Tell us about your biggest life lesson',
-    'What advice would you give your younger self?',
-    'Describe your favorite family tradition',
-    'Tell us about a person who changed your life',
-    'What makes you most proud?',
-    'Share a funny story from your life',
-    'What does family mean to you?',
+    "Tell us about your childhood home",
+    "What was your first job like?",
+    "Share a memorable travel experience",
+    "Tell us about your biggest life lesson",
+    "What advice would you give your younger self?",
+    "Describe your favorite family tradition",
+    "Tell us about a person who changed your life",
+    "What makes you most proud?",
+    "Share a funny story from your life",
+    "What does family mean to you?",
   ];
 }
 
 /**
  * Create a weekly digest of story requests
  */
-export async function generateWeeklyDigest(memberId: string): Promise<{ pending: number; responded: number; total: number }> {
+export async function generateWeeklyDigest(
+  memberId: string,
+): Promise<{ pending: number; responded: number; total: number }> {
   const requests = await getStoryRequests();
-  const memberRequests = requests.filter(r => r.toMemberId === memberId);
+  const memberRequests = requests.filter((r) => r.toMemberId === memberId);
 
   // Filter for requests from the past week
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  const weeklyRequests = memberRequests.filter(r => new Date(r.createdAt) > oneWeekAgo);
+  const weeklyRequests = memberRequests.filter(
+    (r) => new Date(r.createdAt) > oneWeekAgo,
+  );
 
   return {
-    pending: weeklyRequests.filter(r => r.status === 'pending').length,
-    responded: weeklyRequests.filter(r => r.status === 'responded').length,
+    pending: weeklyRequests.filter((r) => r.status === "pending").length,
+    responded: weeklyRequests.filter((r) => r.status === "responded").length,
     total: weeklyRequests.length,
   };
 }

@@ -1,4 +1,4 @@
-# LegacyBox — Post-Migration Setup Guide
+# ManyVersions — Post-Migration Setup Guide
 
 Everything the code now expects you to configure. Do these in order.
 
@@ -6,10 +6,11 @@ Everything the code now expects you to configure. Do these in order.
 
 ## 1. Firebase Project
 
-1. Go to https://console.firebase.google.com → **Create a project** → name it `legacybox`
+1. Go to https://console.firebase.google.com → **Create a project** → name it `manyversions`
 2. Disable Google Analytics if you don't need it (you can add it later)
 
 ### Enable Authentication
+
 3. In Firebase console → **Authentication** → **Get started**
 4. Enable these sign-in providers:
    - **Email/Password**
@@ -17,9 +18,11 @@ Everything the code now expects you to configure. Do these in order.
    - **Apple** (needed for iOS — requires Apple Developer account first)
 
 ### Enable Firestore
+
 5. **Firestore Database** → **Create database** → choose **production mode**
 6. Pick a region close to your users (e.g. `us-central1`)
 7. After creation, go to **Rules** tab and paste:
+
 ```
 rules_version = '2';
 service cloud.firestore {
@@ -43,8 +46,10 @@ service cloud.firestore {
 ```
 
 ### Enable Firebase Storage
+
 8. **Storage** → **Get started** → production mode → same region as Firestore
 9. Go to **Rules** tab and paste:
+
 ```
 rules_version = '2';
 service firebase.storage {
@@ -62,10 +67,12 @@ service firebase.storage {
 ```
 
 ### Get your Firebase config keys
+
 10. **Project Settings** (gear icon) → **General** → scroll to **Your apps** → **Add app** → Web
 11. Copy the config object — you'll need these values for your `.env` files
 
 ### Get Firebase Admin credentials
+
 12. **Project Settings** → **Service accounts** → **Generate new private key**
 13. Download the JSON file — keep it secret, never commit it
 
@@ -73,7 +80,7 @@ service firebase.storage {
 
 ## 2. Cloudflare R2 (audio storage)
 
-1. Go to https://dash.cloudflare.com → **R2** → **Create bucket** → name it `legacybox-audio`
+1. Go to https://dash.cloudflare.com → **R2** → **Create bucket** → name it `manyversions-audio`
 2. **Settings** → **Public access** → enable public bucket (so audio URLs work without signing)
    - Or set up a custom domain under **Settings → Custom Domains**
 3. **R2 → Manage R2 API tokens** → **Create API token**
@@ -92,7 +99,7 @@ service firebase.storage {
 
 ## 4. RevenueCat (in-app purchases)
 
-1. Go to https://app.revenuecat.com → create account → **Create new project** → `LegacyBox`
+1. Go to https://app.revenuecat.com → create account → **Create new project** → `ManyVersions`
 2. Add your apps:
    - **+ New App** → iOS → enter your Apple Bundle ID
    - **+ New App** → Android → enter your Google Play package name
@@ -107,16 +114,16 @@ Create a `.env` file in your project root (never commit this):
 
 ```env
 # Firebase Admin (from service account JSON)
-FIREBASE_PROJECT_ID=legacybox-xxxxx
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@legacybox-xxxxx.iam.gserviceaccount.com
+FIREBASE_PROJECT_ID=manyversions-xxxxx
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@manyversions-xxxxx.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_KEY_HERE\n-----END PRIVATE KEY-----\n"
-FIREBASE_STORAGE_BUCKET=legacybox-xxxxx.appspot.com
+FIREBASE_STORAGE_BUCKET=manyversions-xxxxx.appspot.com
 
 # Cloudflare R2
 R2_ACCOUNT_ID=your_cloudflare_account_id
 R2_ACCESS_KEY_ID=your_r2_access_key
 R2_SECRET_ACCESS_KEY=your_r2_secret_key
-R2_BUCKET_NAME=legacybox-audio
+R2_BUCKET_NAME=manyversions-audio
 R2_PUBLIC_URL=https://pub-xxxxx.r2.dev  # or your custom domain
 
 # Groq
@@ -137,9 +144,9 @@ Create a `.env.local` (or add to `app.config.ts` extra.env) for the Expo client:
 
 ```env
 EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSy...
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=legacybox-xxxxx.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=legacybox-xxxxx
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=legacybox-xxxxx.appspot.com
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=manyversions-xxxxx.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=manyversions-xxxxx
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=manyversions-xxxxx.appspot.com
 EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 EXPO_PUBLIC_FIREBASE_APP_ID=1:123456789:web:xxxxx
 EXPO_PUBLIC_API_BASE_URL=https://your-deployed-server.com
@@ -159,22 +166,33 @@ Recommended: **Railway**
 
 ---
 
-## 7. Apple App Store Setup
+## 7. Test In Expo Go
+
+1. Install **Expo Go** on your phone from the App Store or Google Play.
+2. From the project root, run `pnpm phone`.
+3. Copy the LAN URL from the terminal or scan the printed QR code with Expo Go.
+   The phone launcher uses its own Expo port so it can run alongside the web browser.
+4. If the app cannot reach the backend, set `EXPO_PUBLIC_API_BASE_URL` to your computer's LAN IP, like `http://192.168.1.25:3000`.
+
+---
+
+## 8. Apple App Store Setup
 
 1. Go to https://developer.apple.com → enroll in Apple Developer Program ($99/year)
-2. **Certificates, IDs & Profiles** → **Identifiers** → register your Bundle ID (e.g. `com.yourname.legacybox`)
+2. **Certificates, IDs & Profiles** → **Identifiers** → register your Bundle ID (e.g. `com.yourname.manyversions`)
 3. **App Store Connect** → **My Apps** → **+** → **New App** → fill in details
 4. For in-app purchases: **App Store Connect → Your App → In-App Purchases** → create a subscription product
-   - Product ID example: `com.yourname.legacybox.premium_monthly`
+   - Product ID example: `com.yourname.manyversions.premium_monthly`
    - Add this product ID to RevenueCat
 
 ### Enable Apple Sign-In
+
 5. **Certificates, IDs & Profiles** → your App ID → **Capabilities** → enable **Sign In with Apple**
 6. In Firebase console → Authentication → Apple → add your Bundle ID and download the config
 
 ---
 
-## 8. Google Play Setup
+## 9. Google Play Setup
 
 1. Go to https://play.google.com/console → pay the $25 one-time fee
 2. **Create app** → fill in details
@@ -184,7 +202,7 @@ Recommended: **Railway**
 
 ---
 
-## 9. Expo EAS Build
+## 10. Expo EAS Build
 
 1. Install EAS CLI: `npm install -g eas-cli`
 2. `eas login`
@@ -195,7 +213,7 @@ Recommended: **Railway**
 
 ---
 
-## 10. What Still Needs Code (not done yet)
+## 11. What Still Needs Code (not done yet)
 
 These are wired up on the server but the UI doesn't call them yet:
 

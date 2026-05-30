@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, Modal, ScrollView } from 'react-native';
-import { useColors } from '@/hooks/use-colors';
-import { Fonts } from '@/lib/_core/theme';
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Modal,
+  ScrollView,
+} from "react-native";
+import { useColors } from "@/hooks/use-colors";
+import { Fonts } from "@/lib/_core/theme";
+import * as Haptics from "expo-haptics";
+import { Platform } from "react-native";
 
 interface TutorialStep {
   id: string;
@@ -15,25 +22,41 @@ interface TutorialStep {
 
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    id: 'welcome',
-    title: 'Welcome to LegacyBox',
-    description: 'Let\'s learn how to record and share your stories with your family.',
-    emoji: '📖',
-    tips: ['This app is designed to be easy to use', 'Large buttons and clear text make it simple', 'Your stories are precious — let\'s preserve them!'],
+    id: "welcome",
+    title: "Welcome to ManyVersions",
+    description:
+      "Let's learn how to record and share your stories with your family.",
+    emoji: "📖",
+    tips: [
+      "This app is designed to be easy to use",
+      "Large buttons and clear text make it simple",
+      "Your stories are precious — let's preserve them!",
+    ],
   },
   {
-    id: 'recording',
-    title: 'Recording Your Story',
-    description: 'Tap the big "Record My Story" button on the home screen to start.',
-    emoji: '🎙️',
-    tips: ['Speak clearly and naturally', 'Take your time — there\'s no rush', 'You can re-record if you\'re not happy with it', 'Your story is saved automatically'],
+    id: "recording",
+    title: "Recording Your Story",
+    description:
+      'Tap the big "Record My Story" button on the home screen to start.',
+    emoji: "🎙️",
+    tips: [
+      "Speak clearly and naturally",
+      "Take your time — there's no rush",
+      "You can re-record if you're not happy with it",
+      "Your story is saved automatically",
+    ],
   },
   {
-    id: 'sharing',
-    title: 'Sharing with Family',
-    description: 'Your stories are automatically shared with your family vault.',
-    emoji: '👨‍👩‍👧‍👦',
-    tips: ['Family members can listen and react', 'They can leave comments and emojis', 'Everyone\'s stories are stored safely together'],
+    id: "sharing",
+    title: "Sharing with Family",
+    description:
+      "Your stories are automatically shared with your family vault.",
+    emoji: "👨‍👩‍👧‍👦",
+    tips: [
+      "Family members can listen and react",
+      "They can leave comments and emojis",
+      "Everyone's stories are stored safely together",
+    ],
   },
 ];
 
@@ -45,9 +68,13 @@ interface InteractiveTutorialProps {
 
 /**
  * Interactive Tutorial Component
- * Provides a 3-step guide for first-time Elders to learn how to use LegacyBox.
+ * Provides a 3-step guide for first-time Elders to learn how to use ManyVersions.
  */
-export function InteractiveTutorial({ visible, onComplete, onSkip }: InteractiveTutorialProps) {
+export function InteractiveTutorial({
+  visible,
+  onComplete,
+  onSkip,
+}: InteractiveTutorialProps) {
   const colors = useColors();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -55,7 +82,8 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
 
   const handleNext = () => {
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web")
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (isLastStep) {
       onComplete();
     } else {
@@ -64,7 +92,8 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
   };
 
   const handlePrevious = () => {
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web")
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
@@ -84,10 +113,15 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
         >
           {/* Close Button */}
           <Pressable
-            style={({ pressed }) => [styles.closeButton, pressed && { opacity: 0.6 }]}
+            style={({ pressed }) => [
+              styles.closeButton,
+              pressed && { opacity: 0.6 },
+            ]}
             onPress={onSkip}
           >
-            <Text style={[styles.closeButtonText, { color: colors.muted }]}>✕</Text>
+            <Text style={[styles.closeButtonText, { color: colors.muted }]}>
+              ✕
+            </Text>
           </Pressable>
 
           {/* Step Indicator */}
@@ -98,7 +132,8 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
                 style={[
                   styles.stepDot,
                   {
-                    backgroundColor: index <= currentStep ? colors.primary : colors.border,
+                    backgroundColor:
+                      index <= currentStep ? colors.primary : colors.border,
                   },
                 ]}
               />
@@ -111,18 +146,28 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
             <Text style={styles.emoji}>{step.emoji}</Text>
 
             {/* Title */}
-            <Text style={[styles.title, { color: colors.foreground }]}>{step.title}</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>
+              {step.title}
+            </Text>
 
             {/* Description */}
-            <Text style={[styles.description, { color: colors.muted }]}>{step.description}</Text>
+            <Text style={[styles.description, { color: colors.muted }]}>
+              {step.description}
+            </Text>
 
             {/* Tips */}
             <View style={styles.tipsContainer}>
-              <Text style={[styles.tipsTitle, { color: colors.foreground }]}>Tips:</Text>
+              <Text style={[styles.tipsTitle, { color: colors.foreground }]}>
+                Tips:
+              </Text>
               {step.tips.map((tip, index) => (
                 <View key={index} style={styles.tipItem}>
-                  <Text style={[styles.tipBullet, { color: colors.primary }]}>•</Text>
-                  <Text style={[styles.tipText, { color: colors.foreground }]}>{tip}</Text>
+                  <Text style={[styles.tipBullet, { color: colors.primary }]}>
+                    •
+                  </Text>
+                  <Text style={[styles.tipText, { color: colors.foreground }]}>
+                    {tip}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -140,7 +185,9 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
                 ]}
                 onPress={handlePrevious}
               >
-                <Text style={[styles.buttonText, { color: colors.foreground }]}>← Back</Text>
+                <Text style={[styles.buttonText, { color: colors.foreground }]}>
+                  ← Back
+                </Text>
               </Pressable>
             )}
 
@@ -154,7 +201,7 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
               onPress={handleNext}
             >
               <Text style={styles.primaryButtonText}>
-                {isLastStep ? 'Get Started' : 'Next →'}
+                {isLastStep ? "Get Started" : "Next →"}
               </Text>
             </Pressable>
           </View>
@@ -164,7 +211,9 @@ export function InteractiveTutorial({ visible, onComplete, onSkip }: Interactive
             style={({ pressed }) => [pressed && { opacity: 0.6 }]}
             onPress={onSkip}
           >
-            <Text style={[styles.skipLink, { color: colors.muted }]}>Skip Tutorial</Text>
+            <Text style={[styles.skipLink, { color: colors.muted }]}>
+              Skip Tutorial
+            </Text>
           </Pressable>
         </ScrollView>
       </View>
@@ -183,17 +232,17 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   closeButton: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     padding: 8,
     marginBottom: 16,
   },
   closeButtonText: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   stepIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 8,
   },
   stepDot: {
@@ -202,7 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 20,
   },
   emoji: {
@@ -211,32 +260,32 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontFamily: Fonts?.display,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
   },
   description: {
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 28,
   },
   tipsContainer: {
-    width: '100%',
+    width: "100%",
     gap: 12,
     marginTop: 12,
   },
   tipsTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
   },
   tipItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   tipBullet: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 2,
   },
   tipText: {
@@ -245,7 +294,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginTop: 24,
   },
@@ -254,27 +303,27 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryButton: {
     flex: 1,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   secondaryButton: {
     borderWidth: 2,
   },
   buttonText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   skipLink: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 14,
     marginTop: 12,
-    textDecorationLine: 'underline',
+    textDecorationLine: "underline",
   },
 });

@@ -11,10 +11,13 @@ import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { useFonts } from "expo-font";
 import { GreatVibes_400Regular } from "@expo-google-fonts/great-vibes";
-import { PlayfairDisplay_400Regular, PlayfairDisplay_700Bold } from "@expo-google-fonts/playfair-display";
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_700Bold,
+} from "@expo-google-fonts/playfair-display";
 import * as SplashScreen from "expo-splash-screen";
-import * as Notifications from 'expo-notifications';
-import { useRouter } from 'expo-router';
+import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -24,7 +27,10 @@ import {
 import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
-import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
+import {
+  initManusRuntime,
+  subscribeSafeAreaInsets,
+} from "@/lib/_core/manus-runtime";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -75,7 +81,10 @@ export default function RootLayout() {
   const [trpcClient] = useState(() => createTRPCClient());
 
   const providerInitialMetrics = useMemo(() => {
-    const metrics = initialWindowMetrics ?? { insets: initialInsets, frame: initialFrame };
+    const metrics = initialWindowMetrics ?? {
+      insets: initialInsets,
+      frame: initialFrame,
+    };
     return {
       ...metrics,
       insets: {
@@ -107,12 +116,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Handle notification clicks while app is running
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      const url = response.notification.request.content.data?.url;
-      if (url) {
-        router.push(url as never);
-      }
-    });
+    const responseListener =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        const url = response.notification.request.content.data?.url;
+        if (url) {
+          router.push(url as never);
+        }
+      });
 
     return () => {
       responseListener.remove();
@@ -131,7 +141,10 @@ export default function RootLayout() {
               <Stack.Screen name="index" />
               <Stack.Screen name="onboarding" />
               <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="record" options={{ presentation: "fullScreenModal" }} />
+              <Stack.Screen
+                name="record/index"
+                options={{ presentation: "fullScreenModal" }}
+              />
               <Stack.Screen name="memory/[id]" />
               <Stack.Screen name="thread/[theme]" />
               <Stack.Screen name="timeline" />
@@ -161,7 +174,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={providerInitialMetrics}>
+        {content}
+      </SafeAreaProvider>
     </ThemeProvider>
   );
 }

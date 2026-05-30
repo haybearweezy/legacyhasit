@@ -1,4 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { readMigratedStorageItem } from "@/lib/storage-compat";
 
 /**
  * Accessibility Service
@@ -12,7 +13,7 @@ export interface AccessibilitySettings {
   largeButtons: boolean;
 }
 
-const ACCESSIBILITY_STORAGE_KEY = '@legacybox_accessibility';
+const ACCESSIBILITY_STORAGE_KEY = "@manyversions_accessibility";
 
 const DEFAULT_SETTINGS: AccessibilitySettings = {
   highContrastMode: false,
@@ -26,13 +27,16 @@ const DEFAULT_SETTINGS: AccessibilitySettings = {
  */
 export async function getAccessibilitySettings(): Promise<AccessibilitySettings> {
   try {
-    const stored = await AsyncStorage.getItem(ACCESSIBILITY_STORAGE_KEY);
+    const stored = await readMigratedStorageItem(
+      ACCESSIBILITY_STORAGE_KEY,
+      "_accessibility",
+    );
     if (stored) {
       return JSON.parse(stored);
     }
     return DEFAULT_SETTINGS;
   } catch (error) {
-    console.error('Error getting accessibility settings:', error);
+    console.error("Error getting accessibility settings:", error);
     return DEFAULT_SETTINGS;
   }
 }
@@ -40,13 +44,18 @@ export async function getAccessibilitySettings(): Promise<AccessibilitySettings>
 /**
  * Save accessibility settings
  */
-export async function saveAccessibilitySettings(settings: Partial<AccessibilitySettings>): Promise<void> {
+export async function saveAccessibilitySettings(
+  settings: Partial<AccessibilitySettings>,
+): Promise<void> {
   try {
     const current = await getAccessibilitySettings();
     const updated = { ...current, ...settings };
-    await AsyncStorage.setItem(ACCESSIBILITY_STORAGE_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem(
+      ACCESSIBILITY_STORAGE_KEY,
+      JSON.stringify(updated),
+    );
   } catch (error) {
-    console.error('Error saving accessibility settings:', error);
+    console.error("Error saving accessibility settings:", error);
   }
 }
 
@@ -123,29 +132,29 @@ export async function toggleLargeButtons(): Promise<boolean> {
 export function getHighContrastColors(isDark: boolean): Record<string, string> {
   if (isDark) {
     return {
-      primary: '#FFFF00', // Bright yellow
-      background: '#000000', // Pure black
-      surface: '#1A1A1A', // Very dark gray
-      foreground: '#FFFFFF', // Pure white
-      muted: '#CCCCCC', // Light gray
-      border: '#FFFFFF', // White border
-      success: '#00FF00', // Bright green
-      warning: '#FFFF00', // Bright yellow
-      error: '#FF0000', // Bright red
-      accent: '#00FFFF', // Bright cyan
+      primary: "#FFFF00", // Bright yellow
+      background: "#000000", // Pure black
+      surface: "#1A1A1A", // Very dark gray
+      foreground: "#FFFFFF", // Pure white
+      muted: "#CCCCCC", // Light gray
+      border: "#FFFFFF", // White border
+      success: "#00FF00", // Bright green
+      warning: "#FFFF00", // Bright yellow
+      error: "#FF0000", // Bright red
+      accent: "#00FFFF", // Bright cyan
     };
   } else {
     return {
-      primary: '#0000FF', // Bright blue
-      background: '#FFFFFF', // Pure white
-      surface: '#F0F0F0', // Very light gray
-      foreground: '#000000', // Pure black
-      muted: '#333333', // Dark gray
-      border: '#000000', // Black border
-      success: '#008000', // Dark green
-      warning: '#FF8800', // Dark orange
-      error: '#CC0000', // Dark red
-      accent: '#0088CC', // Dark cyan
+      primary: "#0000FF", // Bright blue
+      background: "#FFFFFF", // Pure white
+      surface: "#F0F0F0", // Very light gray
+      foreground: "#000000", // Pure black
+      muted: "#333333", // Dark gray
+      border: "#000000", // Black border
+      success: "#008000", // Dark green
+      warning: "#FF8800", // Dark orange
+      error: "#CC0000", // Dark red
+      accent: "#0088CC", // Dark cyan
     };
   }
 }
@@ -153,21 +162,31 @@ export function getHighContrastColors(isDark: boolean): Record<string, string> {
 /**
  * Calculate scaled font size
  */
-export function getScaledFontSize(baseSize: number, scaleFactor: number): number {
+export function getScaledFontSize(
+  baseSize: number,
+  scaleFactor: number,
+): number {
   return Math.round(baseSize * scaleFactor);
 }
 
 /**
  * Calculate scaled padding/margin
  */
-export function getScaledSpacing(baseSpacing: number, scaleFactor: number): number {
+export function getScaledSpacing(
+  baseSpacing: number,
+  scaleFactor: number,
+): number {
   return Math.round(baseSpacing * scaleFactor);
 }
 
 /**
  * Get button size based on accessibility settings
  */
-export function getButtonSize(largeButtons: boolean): { paddingVertical: number; paddingHorizontal: number; fontSize: number } {
+export function getButtonSize(largeButtons: boolean): {
+  paddingVertical: number;
+  paddingHorizontal: number;
+  fontSize: number;
+} {
   if (largeButtons) {
     return {
       paddingVertical: 20,
@@ -193,7 +212,9 @@ export async function shouldReduceMotion(): Promise<boolean> {
 /**
  * Get animation duration based on reduce motion setting
  */
-export async function getAnimationDuration(baseDuration: number): Promise<number> {
+export async function getAnimationDuration(
+  baseDuration: number,
+): Promise<number> {
   const shouldReduce = await shouldReduceMotion();
   return shouldReduce ? 0 : baseDuration;
 }

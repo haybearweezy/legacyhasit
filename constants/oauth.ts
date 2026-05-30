@@ -1,4 +1,5 @@
 import { getFirebaseAuth, getFirebaseApp } from "@/lib/_core/auth";
+import Constants from "expo-constants";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,10 +10,58 @@ import {
 } from "firebase/auth";
 import { Platform } from "react-native";
 
-export const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
+const DEFAULT_API_PORT = 3000;
+
+function normalizeBaseUrl(url: string): string {
+  return url.trim().replace(/\/$/, "");
+}
+
+function isLoopbackHost(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ["localhost", "127.0.0.1", "0.0.0.0"].includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function inferDevApiBaseUrl(): string | null {
+  const hostUri =
+    Constants.expoConfig?.hostUri ??
+    (Constants as any).manifest2?.extra?.expoClient?.hostUri ??
+    (Constants as any).manifest?.debuggerHost ??
+    "";
+
+  if (!hostUri) return null;
+
+  const host = hostUri.includes("://")
+    ? new URL(hostUri).hostname
+    : hostUri.split(":")[0];
+  if (!host) return null;
+
+  return `http://${host}:${DEFAULT_API_PORT}`;
+}
 
 export function getApiBaseUrl(): string {
-  return API_BASE_URL;
+  const configured = normalizeBaseUrl(
+    process.env.EXPO_PUBLIC_API_BASE_URL ?? "",
+  );
+  const inferred = inferDevApiBaseUrl();
+
+  if (configured) {
+    if (Platform.OS !== "web" && inferred && isLoopbackHost(configured)) {
+      return inferred;
+    }
+    return configured;
+  }
+
+  if (inferred) {
+    return inferred;
+  }
+
+  return Platform.OS === "web"
+    ? `http://localhost:${DEFAULT_API_PORT}`
+    : `http://127.0.0.1:${DEFAULT_API_PORT}`;
 }
 
 // ── Email/Password ─────────────────────────────────────────────────────────
