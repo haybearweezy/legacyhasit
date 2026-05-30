@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function isVaultMember(vaultId) {
+      return isSignedIn() &&
+        request.auth.uid in get(/databases/$(database)/documents/vaults/$(vaultId)).data.memberUids;
+    }
+
+    function isVaultOwner(vaultId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/vaults/$(vaultId)).data.ownerUid == request.auth.uid;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    // Users can read/write their own document. Admins can read all.
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Vaults ────────────────────────────────────────────────────────────────
+    // Members can read their vault. Only the owner can update/delete.
+    // Creation is handled server-side (Admin SDK) only.
+
+    match /vaults/{vaultId} {
+      allow read: if isVaultMember(vaultId) || isAdmin();
+      allow create: if false; // server-side only
+      allow update: if isVaultOwner(vaultId) || isAdmin();
+      allow delete: if isVaultOwner(vaultId) || isAdmin();
+    }
+
+    // ── Memories ──────────────────────────────────────────────────────────────
+    // Any vault member can read memories in their vault.
+    // Only the memory author can update/delete their own memory.
+    // Creation is handled server-side (Admin SDK) only.
+
+    match /memories/{memoryId} {
+      allow read: if isSignedIn() && isVaultMember(resource.data.vaultId);
+      allow create: if false; // server-side only
+      allow update: if isOwner(resource.data.uid) || isAdmin();
+      allow delete: if isOwner(resource.data.uid) || isAdmin();
+    }
+  }
+}
